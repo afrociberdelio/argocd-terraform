@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: apps-in-cluster
+  namespace: argocd
+spec:
+  project: default
+  sources:
+  - repoURL: git@github.com:afrociberdelio/kubernetes-apps.git
+    targetRevision: main
+    path: ./clusters/eks-dev
+    directory:
+      recurse: true
+  - repoURL: git@github.com:afrociberdelio/kubernetes-foundation.git
+    targetRevision: main
+    path: ./clusters/eks-dev
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      selfHeal: true

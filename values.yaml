@@ -1,0 +1,23 @@
+# redis-ha:
+#   enabled: true
+
+controller:
+  replicas: 1
+
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30080
+    nodePortHttps: 30443
+
+
+# server:
+#   replicas: 1
+#   service:
+#     type: LoadBalancer
+
+repoServer:
+  replicas: 1
+
+applicationSet:
+  replicaCount: 1

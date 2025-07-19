@@ -1,0 +1,6 @@
+# Ignore SSH key PEM and password to ArgoCD
+*.pem
+argocd-login.txt
+
+# Ignore terraform providers
+.terraform
