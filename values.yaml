@@ -1,14 +1,26 @@
 # redis-ha:
 #   enabled: true
 
+global:
+  domain: argocd.mikael.localhost.
+
 controller:
   replicas: 1
 
 server:
+  ingress:
+    enabled: true
+    tls: true
+  ingressClassName: ingress-external
   service:
     type: NodePort
     nodePortHttp: 30080
     nodePortHttps: 30443
+
+nginx:
+  ingress:
+    kubernetes.io/force-ssl-redirect: true
+    ingress.kubernetes.io/ssl-passthrough: true
 
 
 # server:
