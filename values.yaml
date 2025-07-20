@@ -25,12 +25,6 @@ server:
       protocol: TCP
       targetPort: 8080
 
-nginx:
-  ingress:
-    kubernetes.io/force-ssl-redirect: true
-    ingress.kubernetes.io/ssl-passthrough: true
-
-
 # server:
 #   replicas: 1
 #   service:
