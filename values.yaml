@@ -10,20 +10,20 @@ controller:
 server:
   ingress:
     enabled: true
-    tls: true
-  ingressClassName: ingress-external
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    hosts:
+      - argocd.mikael.localhost
+    tls: false
+
   service:
-    enabled: true
     type: ClusterIP
     ports:
     - name: http
       port: 80
       protocol: TCP
       targetPort: 8080
-    selector:
-      app.kubernetes.io/name: argocd-server
-    nodePortHttp: 30080
-    nodePortHttps: 30443
 
 nginx:
   ingress:
