@@ -2,7 +2,7 @@
 #   enabled: true
 
 global:
-  domain: argocd.mikael.localhost.
+  domain: argocd.mikael.localhost
 
 controller:
   replicas: 1
@@ -10,13 +10,8 @@ controller:
 server:
   ingress:
     enabled: true
-    ingressClassName: nginx
-    annotations:
-      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-    hosts:
-      - argocd.mikael.localhost
     tls: false
-
+  ingressClassName: nginx
   service:
     type: ClusterIP
     ports:
@@ -24,6 +19,12 @@ server:
       port: 80
       protocol: TCP
       targetPort: 8080
+
+nginx:
+  ingress:
+    kubernetes.io/force-ssl-redirect: true
+    ingress.kubernetes.io/ssl-passthrough: true
+
 
 # server:
 #   replicas: 1
