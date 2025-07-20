@@ -10,7 +10,7 @@ controller:
 server:
   ingress:
     enabled: true
-    tls: false
+    tls: true
     ingressClassName: nginx
     hosts:
       - argocd.mikael.localhost
