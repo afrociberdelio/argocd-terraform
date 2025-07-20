@@ -13,6 +13,7 @@ server:
     tls: true
   ingressClassName: ingress-external
   service:
+    enabled: true
     type: NodePort
     nodePortHttp: 30080
     nodePortHttps: 30443
