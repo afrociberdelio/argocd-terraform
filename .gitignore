@@ -4,3 +4,4 @@ argocd-login.txt
 
 # Ignore terraform providers
 .terraform
+/cert

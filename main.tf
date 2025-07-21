@@ -5,9 +5,9 @@ resource "kubernetes_namespace" "argocd" {
 }
 
 # Install ArgoCD in your cluster
-data "template_file" "argo-values" {
-  template = file("${path.module}/values.yaml")
-}
+# data "template_file" "argo_values" {
+#   template = file("${path.module}/values.yaml")
+# }
 
 resource "helm_release" "argocd" {
   name       = "argocd"
@@ -18,8 +18,11 @@ resource "helm_release" "argocd" {
   namespace  = kubernetes_namespace.argocd.metadata[0].name
 
   values = [
-    data.template_file.argo-values.rendered
+    file("${path.module}/values.yaml")
   ]
+  # values = [
+  #   data.template_file.argo_values.rendered
+  # ]
 }
 
 # Get ArgoCD password
@@ -97,6 +100,21 @@ resource "kubernetes_secret_v1" "repo_kubernetes_foundation" {
   data = {
     url           = "git@github.com:afrociberdelio/kubernetes-foundation.git"
     sshPrivateKey = file("${path.module}/kubernetes-foundation.pem")
+  }
+}
+
+# Add secrets to ArgoCD dns host
+resource "kubernetes_secret_v1" "argocd_tls" {
+  metadata {
+    name      = "argocd-tls"
+    namespace = "argocd"
+  }
+
+  type = "tls"
+
+  data = {
+    "tls.crt" = filebase64("${path.module}/cert/cert.pem")
+    "tls.key" = filebase64("${path.module}/cert/key.pem")
   }
 }
 
