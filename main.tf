@@ -4,11 +4,6 @@ resource "kubernetes_namespace" "argocd" {
   }
 }
 
-# Install ArgoCD in your cluster
-# data "template_file" "argo_values" {
-#   template = file("${path.module}/values.yaml")
-# }
-
 resource "helm_release" "argocd" {
   name       = "argocd"
   chart      = "argo-cd"
@@ -20,37 +15,55 @@ resource "helm_release" "argocd" {
   values = [
     file("${path.module}/values.yaml")
   ]
-  # values = [
-  #   data.template_file.argo_values.rendered
-  # ]
 }
 
 # Get ArgoCD password
+# resource "null_resource" "password" {
+#   depends_on = [helm_release.argocd]
+
+# provisioner "local-exec" {
+#   interpreter = ["/bin/bash", "-c"]
+#   command = "if [[ \"$(uname -s)\" != \"Windows_NT\" ]]; then echo \"Executando no Linux/macOS\"; for i in {1..10}; do PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>/dev/null); if [[ -n \"$PASSWORD\" ]]; then echo \"$PASSWORD\" | base64 -d > argocd-login.txt; echo \"Senha salva em argocd-login.txt\"; exit 0; else sleep 3; fi; done; else echo \"Executando no Windows\"; powershell -Command \"...\"; fi"
+#   }
+# }
+
 resource "null_resource" "password" {
   depends_on = [helm_release.argocd]
 
   provisioner "local-exec" {
-    interpreter = ["powershell", "-Command"]
+    interpreter = ["/bin/bash", "-c"]
     command = <<-EOT
-      if ($Env:OS -eq "Windows_NT") {
-        Write-Output "Executando no Windows"
-        for ($i = 0; $i -lt 10; $i++) {
-          $b64 = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>$null
-          if ($b64) {
-            $formatted = $b64 -replace '.{64}', '$&`r`n'
-            Set-Content -Path "temp.b64" -Value $formatted -Encoding ascii
-            certutil -f -decode temp.b64 argocd-login.txt | Out-Null
-            Remove-Item temp.b64
-            Write-Output "Senha salva em argocd-login.txt"
-            break
-          } else {
-            Start-Sleep -Seconds 3
+      if [[ "$(uname -s)" != "Windows_NT" ]]; then
+        echo "Executando no Linux/macOS"
+        for i in {1..10}; do
+          PASSWORD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>/dev/null)
+          if [[ -n "$PASSWORD" ]]; then
+            echo "$PASSWORD" | base64 -d > argocd-login.txt
+            echo "Senha salva em argocd-login.txt"
+            exit 0
+          else
+            sleep 3
+          fi
+        done
+      else
+        echo "Executando no Windows"
+        powershell -Command "
+          Write-Output 'Executando no Windows'
+          for (\$i = 0; \$i -lt 10; \$i++) {
+            \$b64 = kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' 2>\$null
+            if (\$b64) {
+              \$formatted = \$b64 -replace '.{64}', '\$&`r`n'
+              Set-Content -Path 'temp.b64' -Value \$formatted -Encoding ascii
+              certutil -f -decode temp.b64 argocd-login.txt | Out-Null
+              Remove-Item temp.b64
+              Write-Output 'Senha salva em argocd-login.txt'
+              break
+            } else {
+              Start-Sleep -Seconds 3
+            }
           }
-        }
-      } else {
-        Write-Output "Executando no Linux/macOS"
-        bash -c "for i in {1..10}; do kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath={.data.password} | base64 -d > argocd-login.txt && exit 0 || sleep 3; done"
-      }
+        "
+      fi
     EOT
   }
 }
@@ -123,36 +136,7 @@ resource "null_resource" "add_repo_secrets" {
   depends_on = [helm_release.argocd]
 
   provisioner "local-exec" {
-    interpreter = ["powershell", "-Command"]
-    command = <<EOT
-      kubectl -n argocd apply -f apps-in-cluster.yaml
-    EOT
+    # interpreter = ["powershell", "-Command"]
+    command = "kubectl -n argocd apply -f apps-in-cluster.yaml"
   }
 }
-
-## Create secrets and add repository in ArgoCD
-# resource "null_resource" "add_repo_secrets" {
-#   depends_on = [helm_release.argocd]
-
-#   provisioner "local-exec" {
-#     interpreter = ["powershell", "-Command"]
-#     command = <<EOT
-#       kubectl -n argocd create secret generic kubernetes-apps-creds --from-file=sshPrivateKey=kubernetes-apps.pem --type=Opaque
-#       kubectl -n argocd create secret generic kubernetes-foundation-creds --from-file=sshPrivateKey=kubernetes-foundation.pem --type=Opaque
-
-#       Write-Output "Aguardando CRD 'Repository' ficar disponível..."
-#       for ($i = 0; $i -lt 10; $i++) {
-#         $ready = kubectl get crd repositories.argoproj.io -o json 2>$null
-#         if ($ready) {
-#           Write-Output "CRD disponível. Aplicando YAMLs..."
-#           kubectl apply -f ./kubernetes-apps.yaml -n argocd
-#           kubectl apply -f ./kubernetes-foundation.yaml -n argocd
-#           break
-#         } else {
-#           Write-Output "Aguardando..."
-#           Start-Sleep -Seconds 5
-#         }
-#       }
-#     EOT
-#   }
-# }

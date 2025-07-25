@@ -13,12 +13,12 @@ terraform {
 
 provider "kubernetes" {
   config_path = "~/.kube/config"
-  config_context = "docker-desktop" # Set kubernetes context here
+  config_context = "k3d-laboratorio" # Set kubernetes context here
 }
 
 provider "helm" {
   kubernetes = {
     config_path = "~/.kube/config"
-    config_context = "docker-desktop" 
+    config_context = "k3d-laboratorio" 
   }
 }
