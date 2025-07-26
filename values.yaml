@@ -7,7 +7,7 @@ configs:
 
 server:
   ingress:
-    enabled: true
+    enabled: false
     controller: generic
     ingressClassName: internal
     annotations:
